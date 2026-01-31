@@ -1,0 +1,37 @@
+services:
+  user_database:
+    container_name: user_database
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=${AUTH_DB_USER}
+      - POSTGRES_PASSWORD=${AUTH_DB_PASSWORD}
+      - POSTGRES_DB=${AUTH_DB_NAME}
+    ports:
+      - "${AUTH_DB_PORT}:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${AUTH_DB_USER} -d ${AUTH_DB_NAME}'" ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+  user_database_migration:
+    build:
+      context: auth-service
+      dockerfile: Dockerfile.migration
+    environment:
+      - AUTH_DB_HOST=user_database
+      - AUTH_DB_PORT=${AUTH_DB_PORT}
+      - AUTH_DB_NAME=${AUTH_DB_NAME}
+      - AUTH_DB_SECRET_KEY=${AUTH_DB_SECRET_KEY}
+      - AUTH_DB_USER=${AUTH_DB_USER}
+      - AUTH_DB_PASSWORD=${AUTH_DB_PASSWORD}
+    depends_on:
+      user_database:
+        condition: service_healthy
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "${ADMINER_PORT}:8080"

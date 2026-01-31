@@ -1,0 +1,8 @@
+# virtual enviorments
+.venv
+
+# python cache
+__pycache__
+
+# dev
+*.bat
