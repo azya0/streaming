@@ -37,5 +37,13 @@ class DatabaseConfig(BaseSettings):
 
 # Global setting for binding api
 class Settings(BaseSettings):
-    HOST: str
-    PORT: int
+    HOST: str = Field(alias="AUTH_API_HOST")
+    PORT: int = Field(alias="AUTH_API_PORT")
+
+
+# Default constants
+class ProgramConstants(BaseSettings):
+    HASH_WORKERS_NUM: int = Field(
+        default=4,
+    )
+

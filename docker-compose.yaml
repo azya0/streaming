@@ -29,6 +29,22 @@ services:
     depends_on:
       user_database:
         condition: service_healthy
+  
+  auth-service:
+    container_name: auth-service
+    restart: always
+    build:
+      context: auth-service
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    environment:
+      - AUTH_DB_HOST=user_database
+    ports:
+      - "${AUTH_API_PORT}:${AUTH_API_PORT}"
+    depends_on:
+      user_database:
+        condition: service_healthy
 
   adminer:
     image: adminer

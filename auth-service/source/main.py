@@ -2,12 +2,14 @@ from fastapi import FastAPI
 import uvicorn
 
 from settings import Settings
+from endoints import routers
 
 
 def get_application() -> FastAPI:
     application = FastAPI(title="User microservice")
 
-    # application.include_router()
+    for router in routers:
+        application.include_router(router)
 
     return application
 

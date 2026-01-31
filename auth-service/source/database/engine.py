@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing_extensions import AsyncGenerator
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -12,13 +13,17 @@ from settings import DatabaseConfig
 settings = DatabaseConfig()
 
 engine = create_async_engine(
-    url=settings.get_postgres_build(),
+    url=str(settings.get_postgres_build()),
     echo=False,
 )
 
-session_factory = async_sessionmaker(engine)
+session_factory = async_sessionmaker(
+    engine,
+    expire_on_commit=False
+)
 
 
+@asynccontextmanager
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     session = session_factory()
 

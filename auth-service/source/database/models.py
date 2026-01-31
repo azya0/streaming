@@ -9,8 +9,8 @@ class Base(DeclarativeBase):
 class User(Base):
     __tablename__ = "users"
 
-    username:       Mapped[str] = mapped_column(String(20))
+    username:       Mapped[str] = mapped_column(String(20), unique=True)
     password_hash:  Mapped[str] = mapped_column(String(256))
     
-    is_active:      Mapped[bool] = mapped_column(Boolean(create_constraint=True))
-    is_admin:       Mapped[bool] = mapped_column(Boolean())
+    is_active:      Mapped[bool] = mapped_column(Boolean(create_constraint=True), default=True)
+    is_admin:       Mapped[bool] = mapped_column(Boolean(), default=False)
