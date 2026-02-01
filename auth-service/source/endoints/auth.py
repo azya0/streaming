@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from repository import get_user_repo, IUserRepository
 from scheme.request import User as UserRequest
-from scheme.response import User as UserResponse
+from scheme.response import User as UserResponse, Tokens
 from utils.exceptions import repository_exception_handler
 
 
@@ -25,5 +25,5 @@ async def get_user(id: int, repository: IUserRepository = Depends(get_user_repo)
 
 @router.delete("/delete/{id}", status_code=200)
 @repository_exception_handler
-async def get_user(id: int, repository: IUserRepository = Depends(get_user_repo)):
+async def delete_user(id: int, repository: IUserRepository = Depends(get_user_repo)):
     return await repository.delete(id)
