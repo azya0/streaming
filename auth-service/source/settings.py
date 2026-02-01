@@ -1,5 +1,7 @@
+from functools import lru_cache
+
 from pydantic import Field, PostgresDsn
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 # Setting for database engine
@@ -47,6 +49,8 @@ class ProgramConstants(BaseSettings):
 
 
 class JwtTokensConfig(BaseSettings):
+    model_config = SettingsConfigDict(frozen=True)
+
     SECRET_KEY:         str = Field(alias="AUTH_API_TOKENS_SECRET_KEY")
 
     ALGORITHM:          str = Field(
@@ -54,5 +58,10 @@ class JwtTokensConfig(BaseSettings):
         alias="AUTH_API_TOKENS_JWT_ALGOTITHM"
     )
     
-    ACCESS_EXPIRES:     str = Field(alias="AUTH_API_TOKENS_JWT_ACCESS_TOKEN_EXPIRES_MINUTE")
-    REFRESH_EXPIRES:    str = Field(alias="AUTH_API_TOKENS_JWT_REFRESH_TOKEN_EXPIRES_DAYS")
+    ACCESS_EXPIRES:     int = Field(alias="AUTH_API_TOKENS_JWT_ACCESS_TOKEN_EXPIRES_MINUTE")
+    REFRESH_EXPIRES:    int = Field(alias="AUTH_API_TOKENS_JWT_REFRESH_TOKEN_EXPIRES_DAYS")
+
+
+@lru_cache
+def get_token_config() -> JwtTokensConfig:
+    return JwtTokensConfig()
