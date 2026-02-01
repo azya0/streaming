@@ -1,1 +1,1 @@
-from .tokens import TokenLogic, Tokens
+from .tokens import TokenLogic, Tokens, get_token_logic
