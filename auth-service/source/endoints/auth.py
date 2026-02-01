@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from repository import UserRepository, UserRepositoryError
+from repository import UserRepository, UserRepositoryError, IUserRepository
 from scheme.request import User as UserRequest
 from scheme.response import User as UserResponse
 
@@ -11,9 +11,9 @@ router = APIRouter(
 
 
 @router.post("/registration", response_model=UserResponse)
-async def register_user(user: UserRequest):
+async def register_user(user: UserRequest, repository: IUserRepository = Depends(lambda : UserRepository())):
     try:
-        result = await UserRepository.create(user)
+        result = await repository.create(user)
     except UserRepositoryError as error:
         raise HTTPException(
             status_code=error.status,
