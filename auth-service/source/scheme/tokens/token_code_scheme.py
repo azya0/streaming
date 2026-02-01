@@ -3,7 +3,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-class TokenType(Enum):
+class TokenType(int, Enum):
     access  = 0
     refresh = 1
 

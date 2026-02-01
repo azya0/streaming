@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from scheme.request import User as UserCreate
-from scheme.response import User as UserResult
+from scheme.request import User as UserCreate, UserAuth
+from scheme.response import User as UserResult, Tokens
 
 
 class IUserRepository(ABC):
@@ -15,4 +15,8 @@ class IUserRepository(ABC):
 
     @abstractmethod
     async def delete(self, id: int) -> UserResult | None:
+        pass
+
+    @abstractmethod
+    async def login(self, user_data: UserAuth) -> Tokens:
         pass

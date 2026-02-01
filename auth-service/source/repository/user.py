@@ -6,19 +6,23 @@ from database.queries.user import (
     create_user, CreateStatus,
     get_user,
     delete_user, DeleteStatus,
+    get_user_by_username,
 )
 from utils.hashing import get_hasher, Hasher
+from utils.tokens import get_token_logic, TokenLogic
+from utils.tokens.exceptions import TokenLogicException
 
-from .interfaces.user import IUserRepository, UserCreate, UserResult
+from .interfaces.user import IUserRepository, UserCreate, UserResult, UserAuth, Tokens
 from .exceptions import RepositoryError
 
 
 class UserRepository(IUserRepository):
-    def __init__(self, session: AsyncSession, hasher: Hasher):
+    def __init__(self, session: AsyncSession, hasher: Hasher, token_logic: TokenLogic):
         assert isinstance(session, AsyncSession)
 
         self.__session: AsyncSession = session
         self.__hasher:  Hasher = hasher
+        self.__token:   TokenLogic = token_logic
     
     async def create(self, user_data: UserCreate) -> UserResult:
         password_hash = await self.__hasher.hash(user_data.password)
@@ -56,11 +60,23 @@ class UserRepository(IUserRepository):
             return
         
         raise RepositoryError(404, "user not found")
+    
+    async def login(self, user_data: UserAuth) -> Tokens:
+        user: UserORM | None = await get_user_by_username(self.__session, user_data.username)
+
+        if user is None:
+            raise RepositoryError(404, "user not found")
+
+        if not await self.__hasher.verify(user.password_hash, user_data.password):
+            raise RepositoryError(400, "wrong password")
+
+        return self.__token.create_tokens(user.id)
 
 
 def get_user_repo(
-        session: AsyncSession = Depends(get_session),
-        haser: Hasher = Depends(get_hasher)
+        session:        AsyncSession = Depends(get_session),
+        haser:          Hasher = Depends(get_hasher),
+        token_logic:    TokenLogic = Depends(get_token_logic),
     ) -> UserRepository:
     
-    return UserRepository(session, haser)
+    return UserRepository(session, haser, token_logic)
