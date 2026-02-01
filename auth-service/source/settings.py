@@ -9,8 +9,6 @@ class DatabaseConfig(BaseSettings):
 
     NAME:       str = Field(alias="AUTH_DB_NAME")
 
-    SECRET_KEY: str = Field(alias="AUTH_DB_SECRET_KEY")
-
     USER:       str = Field(alias="AUTH_DB_USER")
     PASSWORD:   str = Field(alias="AUTH_DB_PASSWORD")
 
@@ -47,3 +45,14 @@ class ProgramConstants(BaseSettings):
         default=4,
     )
 
+
+class JwtTokensConfig(BaseSettings):
+    SECRET_KEY:         str = Field(alias="AUTH_API_TOKENS_SECRET_KEY")
+
+    ALGORITHM:          str = Field(
+        default="HS512",
+        alias="AUTH_API_TOKENS_JWT_ALGOTITHM"
+    )
+    
+    ACCESS_EXPIRES:     str = Field(alias="AUTH_API_TOKENS_JWT_ACCESS_TOKEN_EXPIRES_MINUTE")
+    REFRESH_EXPIRES:    str = Field(alias="AUTH_API_TOKENS_JWT_REFRESH_TOKEN_EXPIRES_DAYS")
