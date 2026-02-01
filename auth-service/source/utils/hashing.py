@@ -24,7 +24,7 @@ class Hasher:
             data
         )
 
-    async def is_hash(self, hash: str, data: str) -> bool:
+    async def verify(self, hash: str, data: str) -> bool:
         try:
             await get_event_loop().run_in_executor(
                 self.pool,
