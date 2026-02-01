@@ -1,5 +1,6 @@
-from asyncio import get_event_loop, AbstractEventLoop
+from asyncio import get_event_loop
 from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -35,3 +36,8 @@ class Hasher:
             return False
         
         return True
+
+
+@lru_cache
+def get_hasher() -> Hasher:
+    return Hasher()

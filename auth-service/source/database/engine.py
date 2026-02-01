@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from typing_extensions import AsyncGenerator
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -23,7 +22,6 @@ session_factory = async_sessionmaker(
 )
 
 
-@asynccontextmanager
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     session = session_factory()
 
