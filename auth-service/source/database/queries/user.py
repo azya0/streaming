@@ -54,3 +54,11 @@ async def delete_user(session: AsyncSession, id: int) -> DeleteStatus:
     await session.refresh(user)
 
     return DeleteStatus.Ok
+
+
+async def get_user_by_username(session: AsyncSession, username: str) -> User | None:
+    query = select(User).where(
+        User.username == username,
+    )
+
+    return (await session.execute(query)).scalar_one_or_none()
