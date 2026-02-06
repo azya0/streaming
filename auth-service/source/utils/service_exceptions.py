@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Callable, ParamSpec, TypeVar
+from typing import Callable, ParamSpec, TypeVar, Any
 
 from fastapi import HTTPException
 
@@ -10,20 +10,20 @@ R = TypeVar("R")
 
 
 class ServiceExceptionsHandlerError(Exception):
-    def __init__(self, ):
-        super().__init__()
+    def __init__(self, type: Any):
+        super().__init__(f"service_exception_to_status_code does not include: {type}")
 
 
 def convert_error(error: IServiceError) -> HTTPException:
     _dict = service_exception_to_status_code.get(error.base_class())
 
     if _dict is None:
-        raise ServiceExceptionsHandlerError()
+        raise ServiceExceptionsHandlerError(error)
     
     status_code: int = _dict.get(error.__class__)
 
     if status_code is None:
-        raise ServiceExceptionsHandlerError()
+        raise ServiceExceptionsHandlerError(error)
 
     return HTTPException(
         status_code=status_code,
