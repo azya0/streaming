@@ -8,15 +8,14 @@ from database.queries.user import (
     delete_user, DeleteStatus,
     get_user_by_username,
 )
-from utils.hashing import get_hasher, Hasher
-from utils.tokens import get_token_logic, TokenLogic
-from utils.tokens.exceptions import TokenLogicException
+from kernel.hashing import get_hasher, Hasher
+from kernel.tokens import get_token_logic, TokenLogic
 
-from .interfaces.user import IUserRepository, UserCreate, UserResult, UserAuth, Tokens
-from .exceptions import RepositoryError
+from .interfaces.user import IUserService, UserCreate, UserResult, UserAuth, Tokens
+from .exceptions import ServiceError
 
 
-class UserRepository(IUserRepository):
+class UserService(IUserService):
     def __init__(self, session: AsyncSession, hasher: Hasher, token_logic: TokenLogic):
         assert isinstance(session, AsyncSession)
 
@@ -43,13 +42,13 @@ class UserRepository(IUserRepository):
             case CreateStatus.AlreadyExists:
                 message = "username is already taken"
         
-        raise RepositoryError(400, message)
+        raise ServiceError(400, message)
     
     async def get(self, id: int) -> UserResult:
         user = await get_user(self.__session, id, actual=True)
 
         if user is None:
-            raise RepositoryError(404, "user not found")
+            raise ServiceError(404, "user not found")
         
         return UserResult.model_validate(user)
 
@@ -59,16 +58,16 @@ class UserRepository(IUserRepository):
         if status == DeleteStatus.Ok:
             return
         
-        raise RepositoryError(404, "user not found")
+        raise ServiceError(404, "user not found")
     
     async def login(self, user_data: UserAuth) -> Tokens:
         user: UserORM | None = await get_user_by_username(self.__session, user_data.username)
 
         if user is None:
-            raise RepositoryError(404, "user not found")
+            raise ServiceError(404, "user not found")
 
         if not await self.__hasher.verify(user.password_hash, user_data.password):
-            raise RepositoryError(400, "wrong password")
+            raise ServiceError(400, "wrong password")
 
         return self.__token.create_tokens(user.id)
 
@@ -77,6 +76,6 @@ def get_user_repo(
         session:        AsyncSession = Depends(get_session),
         haser:          Hasher = Depends(get_hasher),
         token_logic:    TokenLogic = Depends(get_token_logic),
-    ) -> UserRepository:
+    ) -> UserService:
     
-    return UserRepository(session, haser, token_logic)
+    return UserService(session, haser, token_logic)

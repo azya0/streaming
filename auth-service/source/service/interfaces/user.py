@@ -4,7 +4,7 @@ from scheme.request import User as UserCreate, UserAuth
 from scheme.response import User as UserResult, Tokens
 
 
-class IUserRepository(ABC):
+class IUserService(ABC):
     @abstractmethod
     async def create(self, user_data: UserCreate) -> UserResult:
         pass
