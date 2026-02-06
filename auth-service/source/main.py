@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 
 from settings import Settings
-from endoints import routers
+from endpoints import routers
 
 
 def get_application() -> FastAPI:

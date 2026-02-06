@@ -3,7 +3,7 @@ from fastapi import Depends
 from database.engine import get_session, AsyncSession
 from database.models import User as UserORM
 from database.queries.user import (
-    create_user, CreateStatus,
+    create_user,
     get_user,
     delete_user, DeleteStatus,
     get_user_by_username,
@@ -11,8 +11,8 @@ from database.queries.user import (
 from kernel.hashing import get_hasher, Hasher
 from kernel.tokens import get_token_logic, TokenLogic
 
-from .interfaces.user import IUserService, UserCreate, UserResult, UserAuth, Tokens
-from .exceptions import ServiceError
+from ..interfaces.user import IUserService, UserCreate, UserResult, UserAuth, Tokens
+from .exceptions import *
 
 
 class UserService(IUserService):
@@ -26,29 +26,22 @@ class UserService(IUserService):
     async def create(self, user_data: UserCreate) -> UserResult:
         password_hash = await self.__hasher.hash(user_data.password)
         
-        user = UserORM(
-            username=user_data.username,
-            password_hash=password_hash,
+        result = await create_user(
+            self.__session,
+            user_data.username,
+            password_hash
         )
-        
-        status: CreateStatus = await create_user(self.__session, user)
 
-        if status == CreateStatus.Ok:
-            return UserResult.model_validate(user)
-        
-        message = "unexcpected"
+        if result.error() is None:
+            return UserResult.model_validate(result.result())
 
-        match(status):
-            case CreateStatus.AlreadyExists:
-                message = "username is already taken"
-        
-        raise ServiceError(400, message)
+        raise CreateUsernameTaken()
     
     async def get(self, id: int) -> UserResult:
         user = await get_user(self.__session, id, actual=True)
 
         if user is None:
-            raise ServiceError(404, "user not found")
+            raise UserNotFound()
         
         return UserResult.model_validate(user)
 
@@ -58,16 +51,16 @@ class UserService(IUserService):
         if status == DeleteStatus.Ok:
             return
         
-        raise ServiceError(404, "user not found")
+        raise UserNotFound()
     
     async def login(self, user_data: UserAuth) -> Tokens:
         user: UserORM | None = await get_user_by_username(self.__session, user_data.username)
 
         if user is None:
-            raise ServiceError(404, "user not found")
+            raise UserNotFound()
 
         if not await self.__hasher.verify(user.password_hash, user_data.password):
-            raise ServiceError(400, "wrong password")
+            raise WrongPassword()
 
         return self.__token.create_tokens(user.id)
 

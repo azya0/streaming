@@ -1,10 +1,12 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 from scheme.request import User as UserCreate, UserAuth
 from scheme.response import User as UserResult, Tokens
 
+from .base import IService
 
-class IUserService(ABC):
+
+class IUserService(IService):
     @abstractmethod
     async def create(self, user_data: UserCreate) -> UserResult:
         pass

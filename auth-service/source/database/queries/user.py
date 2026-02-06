@@ -3,25 +3,31 @@ from enum import Enum
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
+from utils.expected import *
+
 from ..engine import AsyncSession
 from ..models import User
 
 
-class CreateStatus(Enum):
-    Ok = 0
+class CreateStatus(int, Enum):
     AlreadyExists = 1
 
 
-async def create_user(session: AsyncSession, user: User) -> CreateStatus:
+async def create_user(session: AsyncSession, username: str, password_hash: str) -> Expected[User, CreateStatus]:
+    user = User(
+        username=username,
+        password_hash=password_hash,
+    )
+    
     try:
         session.add(user)
         
         await session.commit()
         await session.refresh(user)
     except IntegrityError:
-        return CreateStatus.AlreadyExists
+        return Error(CreateStatus.AlreadyExists)
     
-    return CreateStatus.Ok
+    return Ok(user)
 
 
 async def get_user(session: AsyncSession, id: int, actual: bool = False) -> User | None:
@@ -41,11 +47,11 @@ class DeleteStatus(Enum):
     NotFound = 1
 
 
-async def delete_user(session: AsyncSession, id: int) -> DeleteStatus:
+async def delete_user(session: AsyncSession, id: int) -> Expected[None, DeleteStatus]:
     user: User | None = await get_user(session, id, actual=True)
 
     if user is None:
-        return DeleteStatus.NotFound
+        return Error(DeleteStatus.NotFound)
     
     user.is_active = False
     
@@ -53,7 +59,7 @@ async def delete_user(session: AsyncSession, id: int) -> DeleteStatus:
     await session.commit()
     await session.refresh(user)
 
-    return DeleteStatus.Ok
+    return Ok(None, DeleteStatus.Ok)
 
 
 async def get_user_by_username(session: AsyncSession, username: str) -> User | None:
