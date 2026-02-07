@@ -7,6 +7,7 @@ from scheme.response import User as UserResponse, Tokens
 
 router = APIRouter(
     prefix="/auth",
+    tags=["auth"]
 )
 
 

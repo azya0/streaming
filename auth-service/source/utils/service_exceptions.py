@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import HTTPException, Request
 
-from service.exceptions import IServiceError, service_exception_to_status_code
+from service.exceptions import IServiceError, UnexpectedError, service_exception_to_status_code
 
 
 class ServiceExceptionsHandlerError(Exception):
@@ -11,6 +11,12 @@ class ServiceExceptionsHandlerError(Exception):
 
 
 def convert_error(error: IServiceError) -> HTTPException:
+    if isinstance(error, UnexpectedError):
+        return HTTPException(
+            status_code=500,
+            detail=str(error)            
+        )
+
     _dict = service_exception_to_status_code.get(error.base_class())
 
     if _dict is None:

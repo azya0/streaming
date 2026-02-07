@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from dataclasses import dataclass
+from enum import Enum
 from functools import lru_cache
 from typing import Callable
 
@@ -7,10 +8,9 @@ from fastapi import Depends
 import jwt
 from pydantic_core import ValidationError
 
+from utils.expected import *
 from settings import JwtTokensConfig, get_token_config
 from scheme.tokens import TokenScheme, TokenType
-
-from .exceptions import TokenExpired, WrongTokenType, NotValidToken
 
 
 @dataclass
@@ -58,28 +58,40 @@ class TokenLogic:
             create_by_data(get_timestamp(self.__access_expire), TokenType.access),
             create_by_data(get_timestamp(self.__refresh_expire), TokenType.refresh),
         )
+    
+    class RefreshStatus(int, Enum):
+        Ok = 0
+        DecodeError = 1
+        NotValidToken = 2
+        WrongTokenType = 3
+        TokenExpired = 4
 
-    def refresh_tokens(self, access_token: str) -> Tokens:
+    def refresh_tokens(self, access_token: str) -> Expected[Tokens, RefreshStatus]:
         current_time: datetime = datetime.now()
 
-        payload = jwt.decode(
-            access_token,
-            self.__settings.SECRET_KEY,
-            self.__settings.ALGORITHM
-        )
+        try:
+            payload = jwt.decode(
+                access_token,
+                self.__settings.SECRET_KEY,
+                self.__settings.ALGORITHM
+            )
+        except jwt.exceptions.DecodeError:
+            return Error(TokenLogic.RefreshStatus.DecodeError)
 
         try:
             scheme = TokenScheme.model_validate(payload)
         except ValidationError:
-            raise NotValidToken
+            return Error(TokenLogic.RefreshStatus.NotValidToken)
 
         if scheme.type != TokenType.access:
-            raise WrongTokenType
+            return Error(TokenLogic.RefreshStatus.WrongTokenType)
         
         if int(current_time.timestamp()) > scheme.expire:
-            raise TokenExpired
+            return Error(TokenLogic.RefreshStatus.TokenExpired)
         
-        return self.create_tokens(scheme.id)
+        tokens = self.create_tokens(scheme.id)
+
+        return Ok(tokens)
 
 
 @lru_cache

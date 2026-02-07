@@ -11,3 +11,11 @@ class IServiceError(ABC, Exception):
         IServiceError -> <IServiceBaseException> -> service exceptions
         """
         pass
+
+
+class UnexpectedError(IServiceError):
+    def __init__(self):
+        super().__init__("this service error is unexpected. please ask developers about this problem")
+
+    def base_class() -> type[IServiceError]:
+        return UnexpectedError

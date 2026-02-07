@@ -1,5 +1,6 @@
-from .interfaces.exceptions import IServiceError
+from .interfaces.exceptions import IServiceError, UnexpectedError
 from .user.exceptions import *
+from .token.exceptions import *
 
 
 service_exception_to_status_code: dict[type[IServiceError], dict[type[IServiceError], int]] = {
@@ -8,4 +9,9 @@ service_exception_to_status_code: dict[type[IServiceError], dict[type[IServiceEr
         WrongPassword: 400,
         UserNotFound: 404,
     },
+    TokenServiceException: {
+        ValidationError: 400,
+        WrongType: 400,
+        TokenExpired: 400,
+    }
 }

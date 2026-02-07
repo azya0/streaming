@@ -3,7 +3,7 @@ from fastapi import Depends
 from database.engine import get_session, AsyncSession
 from database.models import User as UserORM
 from database.queries.user import (
-    create_user,
+    create_user, CreateStatus,
     get_user,
     delete_user, DeleteStatus,
     get_user_by_username,
@@ -12,7 +12,8 @@ from kernel.hashing import get_hasher, Hasher
 from kernel.tokens import get_token_logic, TokenLogic
 
 from ..interfaces.user import IUserService, UserCreate, UserResult, UserAuth, Tokens
-from .exceptions import *
+from ..exceptions import UnexpectedError
+from .exceptions import CreateUsernameTaken, UserNotFound, WrongPassword
 
 
 class UserService(IUserService):
@@ -32,10 +33,13 @@ class UserService(IUserService):
             password_hash
         )
 
-        if result.error() is None:
+        if (error := result.error()) is None:
             return UserResult.model_validate(result.result())
 
-        raise CreateUsernameTaken()
+        if error is CreateStatus.AlreadyExists:
+            raise CreateUsernameTaken()
+        
+        raise UnexpectedError()
     
     async def get(self, id: int) -> UserResult:
         user = await get_user(self.__session, id, actual=True)
