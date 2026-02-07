@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 import uvicorn
 
-from settings import Settings
+from utils.service_exceptions import IServiceError, service_exception_handler
 from endpoints import routers
+from settings import Settings
 
 
 def get_application() -> FastAPI:
@@ -10,6 +11,8 @@ def get_application() -> FastAPI:
 
     for router in routers:
         application.include_router(router)
+
+    application.exception_handler(IServiceError)(service_exception_handler)
 
     return application
 

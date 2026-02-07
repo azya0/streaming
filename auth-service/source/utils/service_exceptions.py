@@ -1,12 +1,8 @@
-from functools import wraps
-from typing import Callable, ParamSpec, TypeVar, Any
+from typing import Any
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 
 from service.exceptions import IServiceError, service_exception_to_status_code
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 class ServiceExceptionsHandlerError(Exception):
@@ -31,13 +27,5 @@ def convert_error(error: IServiceError) -> HTTPException:
     )
 
 
-def service_exception_handler(old_function: Callable[P, R]) -> Callable[P, R]:
-    @wraps(old_function)
-    async def new_function(*args: P.args, **kwargs: P.kwargs) -> R:
-        try:
-            result = await old_function(*args, **kwargs)
-        except IServiceError as error:
-            raise convert_error(error)
-
-        return result
-    return new_function
+def service_exception_handler(request: Request, exc: Exception):
+    raise convert_error(exc)
