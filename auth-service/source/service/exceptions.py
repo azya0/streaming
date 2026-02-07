@@ -1,5 +1,5 @@
 from .interfaces.exceptions import IServiceError
-from .user_service.exceptions import *
+from .user.exceptions import *
 
 
 service_exception_to_status_code: dict[type[IServiceError], dict[type[IServiceError], int]] = {
