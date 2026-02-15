@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import select
@@ -47,11 +48,11 @@ class DeleteStatus(Enum):
     NotFound = 1
 
 
-async def delete_user(session: AsyncSession, id: int) -> Expected[None, DeleteStatus]:
+async def delete_user(session: AsyncSession, id: int) -> DeleteStatus:
     user: User | None = await get_user(session, id, actual=True)
 
     if user is None:
-        return Error(DeleteStatus.NotFound)
+        return DeleteStatus.NotFound
     
     user.is_active = False
     
@@ -59,7 +60,7 @@ async def delete_user(session: AsyncSession, id: int) -> Expected[None, DeleteSt
     await session.commit()
     await session.refresh(user)
 
-    return Ok(None, DeleteStatus.Ok)
+    return DeleteStatus.Ok
 
 
 async def get_user_by_username(session: AsyncSession, username: str) -> User | None:
@@ -68,3 +69,25 @@ async def get_user_by_username(session: AsyncSession, username: str) -> User | N
     )
 
     return (await session.execute(query)).scalar_one_or_none()
+
+
+class TokenActualStatus(int, Enum):
+    Ok = 0
+    NotFound = 1
+    NotActive = 2
+    TimeExpired = 3
+
+
+async def user_from_token(session: AsyncSession, id: int, creation_data: datetime) -> Expected[User, TokenActualStatus]:
+    user: User | None = await get_user(session, id)
+
+    if user is None:
+        return Error(TokenActualStatus.NotFound)
+    
+    if not user.is_active:
+        return Error(TokenActualStatus.NotActive)
+    
+    if user.updated_at > creation_data:
+        return Error(TokenActualStatus.TimeExpired)
+    
+    return Ok(user)

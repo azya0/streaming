@@ -16,7 +16,7 @@ class IUserService(IService):
         pass
 
     @abstractmethod
-    async def delete(self, id: int) -> UserResult | None:
+    async def delete(self, refresh_token: str, id: int) -> UserResult | None:
         pass
 
     @abstractmethod

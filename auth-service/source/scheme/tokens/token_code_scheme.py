@@ -9,6 +9,7 @@ class TokenType(int, Enum):
 
 
 class TokenCodeScheme(BaseModel):
-    id:     int
-    expire: int
-    type:   TokenType
+    id:         int
+    created:    int
+    expire:     int
+    type:       TokenType

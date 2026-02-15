@@ -46,6 +46,7 @@ class TokenLogic:
         create_by_data: Callable[[int, TokenType], TokenScheme] \
             = lambda expire, type : self.__create_token(TokenScheme(
                 id=id,
+                created=int(current_time.timestamp()),
                 expire=expire,
                 type=type.value,
                 )
@@ -59,36 +60,46 @@ class TokenLogic:
             create_by_data(get_timestamp(self.__refresh_expire), TokenType.refresh),
         )
     
-    class RefreshStatus(int, Enum):
+    class ValidatationStatus(int, Enum):
         Ok = 0
         DecodeError = 1
         NotValidToken = 2
         WrongTokenType = 3
         TokenExpired = 4
-
-    def refresh_tokens(self, access_token: str) -> Expected[Tokens, RefreshStatus]:
+    
+    def validate(self, token: str, is_access: bool = True) -> Expected[TokenScheme, ValidatationStatus]:
         current_time: datetime = datetime.now()
-
+        
         try:
             payload = jwt.decode(
-                access_token,
+                token,
                 self.__settings.SECRET_KEY,
                 self.__settings.ALGORITHM
             )
         except jwt.exceptions.DecodeError:
-            return Error(TokenLogic.RefreshStatus.DecodeError)
+            return Error(TokenLogic.ValidatationStatus.DecodeError)
 
         try:
             scheme = TokenScheme.model_validate(payload)
         except ValidationError:
-            return Error(TokenLogic.RefreshStatus.NotValidToken)
+            return Error(TokenLogic.ValidatationStatus.NotValidToken)
 
-        if scheme.type != TokenType.access:
-            return Error(TokenLogic.RefreshStatus.WrongTokenType)
+        if scheme.type != (TokenType.access if is_access else TokenType.refresh):
+            return Error(TokenLogic.ValidatationStatus.WrongTokenType)
         
         if int(current_time.timestamp()) > scheme.expire:
-            return Error(TokenLogic.RefreshStatus.TokenExpired)
+            return Error(TokenLogic.ValidatationStatus.TokenExpired)
         
+        return Ok(scheme)
+    
+    def refresh_tokens(self, refresh_token: str) -> Expected[Tokens, ValidatationStatus]:
+        validation_result = self.validate(refresh_token, is_access=False)
+
+        if (error := validation_result.error()) is not None:
+            return Error(error)
+        
+        scheme: TokenScheme = validation_result.result()
+
         tokens = self.create_tokens(scheme.id)
 
         return Ok(tokens)

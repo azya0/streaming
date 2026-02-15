@@ -8,6 +8,9 @@ service_exception_to_status_code: dict[type[IServiceError], dict[type[IServiceEr
         CreateUsernameTaken: 400,
         WrongPassword: 400,
         UserNotFound: 404,
+        WrongTokenData: 403,
+        TokenNotActual: 403,
+        PermissionDenied: 403,
     },
     TokenServiceException: {
         ValidationError: 400,

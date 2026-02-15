@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from service import get_user_repo, IUserService
 from scheme.request import User as UserRequest, UserAuth as UserRequestAuth
 from scheme.response import User as UserResponse, Tokens
+from scheme.oauth2 import oauth2_scheme
 
 
 router = APIRouter(
@@ -22,8 +23,12 @@ async def get_user(id: int, service: IUserService = Depends(get_user_repo)):
 
 
 @router.delete("/delete/{id}", status_code=200)
-async def delete_user(id: int, service: IUserService = Depends(get_user_repo)):
-    return await service.delete(id)
+async def delete_user(
+    id: int,
+    token: str = Depends(oauth2_scheme),
+    service: IUserService = Depends(get_user_repo)
+):
+    return await service.delete(token, id)
 
 
 @router.post("/login", response_model=Tokens)
