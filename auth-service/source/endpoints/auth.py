@@ -25,10 +25,10 @@ async def get_user(id: int, service: IUserService = Depends(get_user_repo)):
 @router.delete("/delete/{id}", status_code=200)
 async def delete_user(
     id: int,
-    token: str = Depends(oauth2_scheme),
+    access_token: str = Depends(oauth2_scheme),
     service: IUserService = Depends(get_user_repo)
 ):
-    return await service.delete(token, id)
+    return await service.delete(access_token, id)
 
 
 @router.post("/login", response_model=Tokens)
